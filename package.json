@@ -1,0 +1,21 @@
+{
+  "name": "playwright-jira-ai",
+  "version": "1.0.0",
+  "description": "QA AI Automation Flow from Jira to Playwright",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "generate-test": "ts-node src/runAutomation.ts"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.42.0",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "openai": "^4.33.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  }
+}
