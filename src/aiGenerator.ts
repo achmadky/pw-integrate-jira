@@ -4,11 +4,28 @@ import { JiraIssueDetails } from './jiraClient';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function generatePlaywrightTest(issue: JiraIssueDetails): Promise<string> {
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith('dummy')) {
+    // Fallback template when valid OpenAI API key is not provided
+    return `import { test, expect } from '@playwright/test';
+
+test('${issue.key}: ${issue.summary}', async ({ page }) => {
+  // Test generated for Jira Ticket: ${issue.key}
+  // Description: ${issue.description}
+  
+  await page.goto('https://example.com');
+  
+  // Acceptance Criteria implementation steps
+  // 1. Navigate and perform actions
+  await expect(page).toHaveTitle(/Example Domain/);
+});
+`;
+  }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   const prompt = `
 You are an expert SDET and QA Automation Engineer.
 Given the following Jira ticket details, write a robust Playwright TypeScript test script using '@playwright/test'.

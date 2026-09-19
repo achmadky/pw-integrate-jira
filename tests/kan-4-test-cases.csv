@@ -1,0 +1,5 @@
+Test Case ID,Title,Preconditions,Steps,Expected Result,Feasibility (Can/Cannot)
+TC-KAN-4-01,Verify navigation to Tawarkan Bantuan page,User is on internet,1. Open https://bantuan-kita.vercel.app/\n2. Click 'Tawarkan Bantuan' button,User successfully navigates to the volunteer form page,Can
+TC-KAN-4-02,Submit volunteer form with valid data,User is on Tawarkan Bantuan form page,1. Fill in valid name, phone, and description\n2. Click Submit,Success popup appears: "Penawaran bantuan berhasil dikirim! Menunggu persetujuan admin.",Can
+TC-KAN-4-03,Submit volunteer form with empty required fields,User is on Tawarkan Bantuan form page,1. Leave required fields blank\n2. Click Submit,Validation error messages should appear preventing submission,Can
+TC-KAN-4-04,Admin approval verification by regular user,User has submitted form,1. Check admin dashboard without admin credentials,Regular user cannot access admin dashboard / approve requests directly from client view,Cannot
