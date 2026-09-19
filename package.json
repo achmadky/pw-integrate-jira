@@ -4,14 +4,12 @@
   "description": "QA AI Automation Flow from Jira to Playwright",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test",
-    "generate-test": "ts-node --transpile-only src/runAutomation.ts"
+    "test": "playwright test"
   },
   "dependencies": {
     "@playwright/test": "^1.42.0",
     "axios": "^1.6.8",
-    "dotenv": "^16.4.5",
-    "openai": "^4.33.0"
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
