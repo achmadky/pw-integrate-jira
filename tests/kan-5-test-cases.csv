@@ -1,6 +1,3 @@
 Test Case ID,Title,Preconditions,Steps,Expected Result,Feasibility (Can/Cannot)
-TC-KAN-5-01,Visit Sauce Demo shopify store,User is on internet,1. Open browser and navigate to https://sauce-demo.myshopify.com/,Homepage loads successfully with featured products displayed,Can
-TC-KAN-5-02,Click into Grey Jacket product,User is on the homepage,1. Locate and click on the 'Grey jacket' product card/link,User is redirected to the Grey Jacket product detail page showing price (£55.00),Can
-TC-KAN-5-03,Add Grey Jacket into cart,User is on the Grey Jacket product detail page,1. Locate and click the 'Add to cart' / purchase button,Grey Jacket is successfully added to the cart, and cart counter updates,Can
-TC-KAN-5-04,Navigate to Checkout page,User has added Grey Jacket to cart,1. Click on 'Check Out' or 'My Cart' link\n2. Proceed to checkout page,Checkout page is displayed with payment details and Grey Jacket item present,Can
-TC-KAN-5-05,Verify payment gateway processing with external processor,User is on checkout page,1. Submit payment details via external third-party payment gateway,Payment transaction processed securely by payment processor API,Cannot
+TC-KAN-5-01,Visit Sauce Demo store & navigate to Grey Jacket,User is on internet,1. Open browser and navigate to https://sauce-demo.myshopify.com/\n2. Click on the 'Grey jacket' product link,User is successfully redirected to Grey Jacket product detail page showing price £55.00,Can
+TC-KAN-5-02,Add Grey Jacket into cart and proceed to checkout,User is on Grey Jacket product page,1. Click 'Add to cart' / purchase button\n2. Click 'Check Out' or 'My Cart' link,User proceeds to checkout/cart page with Grey Jacket item present,Can

@@ -15,31 +15,21 @@ When given a Jira ticket, follow this exact step-by-step framework to prevent ha
 - Fetch the Jira issue details (summary, description, acceptance criteria) via the Jira API.
 - Dynamically parse any target URL, endpoints, or environment links provided inside the ticket description/criteria. Never hardcode URLs.
 
-### Step 3: Generate Detailed Manual Test Cases (CSV)
+### Step 3: Perform Exploratory Smoke Testing & Generate Feasible Test Cases (CSV)
 - **Rules & Requirements:**
-  1. Parse all acceptance criteria, summary, and description thoroughly. Do not abbreviate or summarize steps—write out every detailed action, input, and expected outcome.
-  2. Enumerate detailed behaviors across:
-     - **Happy path** (valid input, expected flow, complete multi-step user journey)
-     - **Negative** (invalid input, missing fields, wrong types, incorrect formats)
-     - **Edge/boundary** (empty fields, max length, zero, null, special characters)
-     - **Permission/security** (auth/role/validation)
-  3. Never mark anything as "Passed" or "Verified" prior to execution.
-  4. Save output at `tests/{issueKey}-test-cases.csv` with explicit, granular test steps.
+  1. Perform a live exploratory smoke test using Playwright browser automation on the dynamically extracted target URL first.
+  2. Based on actual empirical findings during exploration, generate detailed manual test cases (CSV) at `tests/{issueKey}-test-cases.csv`.
+  3. **Crucial Rule on Feasibility:** Only include test cases that are actually possible and feasible to execute in the automated test environment. **Do not include skipped cases or impossible scenarios** (e.g. external payment gateway APIs requiring live sandbox credentials, admin backend controls without auth tokens, etc.). If a case requires external dependencies that are not possible to automate, **omit it entirely** from both the CSV test cases and the test script.
 
-### Step 4: Explore and Verify via Playwright Browser Automation (MCP / Browser)
-- Use browser automation / Playwright MCP to actively visit the **dynamically extracted target URL** from the Jira ticket.
-- Perform live exploratory testing on the UI to discover actual locators, element structures, form fields, and behaviors.
-- Update `tests/{issueKey}-test-cases.csv` with empirical findings (detailing explicitly what **can** and **cannot** be automated or tested based on live app inspection).
-
-### Step 5: Generate Detailed Playwright E2E Test Script
+### Step 4: Generate Detailed Playwright E2E Test Script
 - **Rules:**
-  1. Build the Playwright test script (`tests/{issueKey}.spec.ts`) strictly mapped to the detailed steps, dynamic URL, and empirical findings from the updated CSV test cases.
+  1. Build the Playwright test script (`tests/{issueKey}.spec.ts`) strictly mapped to the feasible, verified test steps from the updated CSV test cases.
   2. Implement user-centric testing mirroring real user journeys with resilient locators (`getByRole`, `getByText`, `getByLabel`, `getByTestId`).
-  3. Avoid generic placeholders or empty test implementations; write fully realized, actionable test steps matching the app's real DOM structure.
+  3. Ensure every test in the script is fully runnable and actionable—**no skipped tests or impossible stubs**.
 
-### Step 6: Execute and Validate Test Suite
+### Step 5: Execute and Validate Test Suite
 - Run `npx playwright test tests/{issueKey}.spec.ts`.
-- Ensure zero errors or failures. Debug and fix any locators or assertion mismatches.
+- Ensure zero errors, failures, or skipped tests. Debug and fix any locators or assertion mismatches.
 
-### Step 7: Complete & Transition Ticket
+### Step 6: Complete & Transition Ticket
 - Transition the Jira ticket status to **"Done"** or **"In Review"**.
