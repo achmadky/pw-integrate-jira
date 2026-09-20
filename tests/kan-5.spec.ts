@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('KAN-5: Add Cart and Payment End-to-End Tests', () => {
 
-  test('KAN-TC-2: Visit Sauce Demo store & navigate to Grey Jacket', { tag: '@KAN-TC-2' }, async ({ page }) => {
+  test('KAN-TC-6: Visit Sauce Demo store & navigate to Grey Jacket', { tag: '@KAN-TC-6' }, async ({ page }) => {
     // 1. Open browser and navigate to target URL
     await page.goto('https://sauce-demo.myshopify.com/');
     await expect(page).toHaveTitle(/Sauce Demo/i);
@@ -16,7 +16,7 @@ test.describe('KAN-5: Add Cart and Payment End-to-End Tests', () => {
     await expect(page.locator('body')).toContainText('£55.00');
   });
 
-  test('KAN-TC-3: Add Grey Jacket into cart and proceed to checkout', { tag: '@KAN-TC-3' }, async ({ page }) => {
+  test('KAN-TC-7: Add Grey Jacket into cart and proceed to checkout', { tag: '@KAN-TC-7' }, async ({ page }) => {
     // 1. Visit Grey Jacket product page directly
     await page.goto('https://sauce-demo.myshopify.com/collections/frontpage/products/grey-jacket');
 

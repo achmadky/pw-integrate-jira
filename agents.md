@@ -9,12 +9,12 @@ This project integrates Jira issue tracking with Playwright test automation usin
 ### Core Mandates & Execution Control
 - **Strict Sequential Execution:** Every step below (Steps 1 through 9) is strictly mandatory and MUST be completed in exact sequential order.
 - **Assignee Rule:** Before transitioning a ticket from "To Do" to "In Progress", assign the Jira issue to yourself/current user via Jira MCP tool (`jira_update_issue` / `jira_assign_issue`).
-- **PURE MCP MANDATE:** All Jira operations (assigning, transitioning status, commenting) and AIO Tests operations (`create_test_case`, `update_test_case`) MUST be executed strictly through MCP tools. No custom runner/helper scripts.
-- **STRICT AIO REQUIREMENT & CYCLE MANDATE:** 
-  1. Test cases created in AIO Tests MUST be explicitly linked to the Jira requirement (`requirements: [numericJiraIssueId]`) via AIO Tests MCP (`update_test_case`).
-  2. Test cases MUST be set to `Published` status via MCP.
-  3. Test cases MUST be attached to an execution cycle explicitly linked to `issueKey` (`tasks: [issueKey]`), and executed/reported inside that cycle.
-- **STRICT STEP 5 BLOCKER:** You are STRICTLY FORBIDDEN from proceeding to Step 6 (Playwright script creation) or Step 9 (Ticket Completion) UNLESS the Test Cases are published, explicitly linked to the Jira requirement ID, AND attached to the Test Cycle inside AIO Tests.
+- **PURE MCP MANDATE:** All Jira operations (assigning, transitioning status, commenting) and AIO Tests operations (`create_test_case`, `update_test_case`, `search_test_cases`) MUST be executed strictly through MCP tools. Hardcoded test case keys or hardcoded values in scripts are STRICTLY PROHIBITED.
+- **CSV DYNAMIC CYCLE RULE:** 
+  1. In **Step 4**, test cases written to `tests/{issueKey}-test-cases.csv` MUST leave the `Test Case ID` column blank initially (e.g. `,,Title,Preconditions...`).
+  2. In **Step 5**, the AI MUST parse the CSV rows dynamically, invoke AIO Tests MCP (`create_test_case`) to create each test case, retrieve the generated AIO key (e.g. `KAN-TC-X`), link the Jira requirement ID (`requirements: [numericJiraIssueId]`), set status to `Published`, and then **update the CSV file with the real AIO Test Case IDs**.
+  3. Playwright test scripts generated in **Step 6** MUST map the dynamically generated AIO test keys (e.g. `{ tag: '@KAN-TC-X' }`) from the updated CSV.
+- **STRICT STEP 5 BLOCKER:** You are STRICTLY FORBIDDEN from proceeding to Step 6 (Playwright script creation) or Step 9 (Ticket Completion) UNLESS the CSV has been updated with real AIO test keys, and test cases are published, explicitly linked to the Jira requirement ID, AND attached to the Test Cycle in AIO Tests.
 
 ---
 
@@ -27,27 +27,30 @@ This project integrates Jira issue tracking with Playwright test automation usin
 ### Step 3: Fetch Ticket Details via Jira MCP Tool
 - Fetch summary, description, numeric issue ID, and acceptance criteria via Jira MCP. Extract target URLs dynamically.
 
-### Step 4: Perform Exploratory Smoke Testing & Generate Feasible Test Cases (CSV)
+### Step 4: Perform Exploratory Smoke Testing & Generate Initial CSV (Blank Test Case IDs)
 - Use Playwright MCP / web search tools to explore the target URL.
-- Write feasible test cases to `tests/{issueKey}-test-cases.csv`.
+- Write feasible test cases to `tests/{issueKey}-test-cases.csv` with the `Test Case ID` column left blank.
 
-### Step 5: [STRICT MANDATORY PREREQUISITE] Create & Publish Test Cases, Link Jira Requirement & Create Cycle via AIO Tests MCP Server
-- Invoke AIO Tests MCP tool (`create_test_case`) to create test cases directly in AIO Tests.
-- Link test cases to the Jira requirement ID (`requirements: [numericJiraIssueId]`) and set status to `Published` via AIO Tests MCP (`update_test_case`).
-- Attach test cases to an execution cycle explicitly linked to `issueKey` (`KAN-CY-X`).
+### Step 5: [STRICT MANDATORY PREREQUISITE] Create Test Cases in AIO Tests via MCP & Update CSV with Generated AIO Keys
+- Read `tests/{issueKey}-test-cases.csv` and dynamically parse every feasible test case row.
+- For each row, invoke AIO Tests MCP tool (`create_test_case`) with `status: "Published"`, `requirements: [numericJiraIssueId]`, `stepType: "Classic"`, and `steps`.
+- Retrieve the auto-generated AIO Test Case Key (e.g. `KAN-TC-4`, `KAN-TC-5`).
+- Update `tests/{issueKey}-test-cases.csv` to fill in the `Test Case ID` column with the real AIO Test Case Keys.
+- Verify creation via AIO Tests MCP (`search_test_cases`).
 
-### Step 6: Generate Detailed Playwright E2E Test Script
-- Build `tests/{issueKey}.spec.ts` strictly mapped to the feasible test cases from Step 5 with exact test keys (e.g. `{ tag: '@KAN-TC-2' }`).
+### Step 6: Generate Detailed Playwright E2E Test Script from Updated CSV
+- Read the updated `tests/{issueKey}-test-cases.csv` containing real AIO Test Case Keys.
+- Build `tests/{issueKey}.spec.ts` strictly mapped to the CSV test cases using the real AIO test tags (e.g. `{ tag: '@KAN-TC-4' }`).
 
 ### Step 7: Execute and Validate Playwright Test Suite with AIO Reporter
 - Run `npx playwright test tests/{issueKey}.spec.ts`.
-- Verify results are reported live to the AIO Tests Execution Cycle (`KAN-CY-X`).
+- Verify results are reported live to the AIO Tests Execution Cycle (`Execution Cycle - {issueKey}`).
 
 ### Step 8: Post Summary Comment to Jira Ticket via Jira MCP Tool
 - Use Jira MCP tool to post a summary comment containing:
-  - Total test cases created and their list.
+  - Total test cases created and their list of real AIO keys (from the updated CSV).
   - Number of passed tests.
-  - AIO Tests creation & requirement linkage status (`requirements: [KAN-5]`).
+  - AIO Tests creation & requirement linkage status (`requirements: [{issueKey}]`).
   - Playwright script execution status.
 
 ### Step 9: Complete & Transition Ticket via Jira MCP Tool

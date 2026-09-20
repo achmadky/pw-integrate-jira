@@ -6,6 +6,9 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const reporters: any[] = [['html']];
 
+// Dynamically determine current Jira issue key from environment or fallback
+const issueKey = process.env.JIRA_ISSUE_KEY || 'KAN-5';
+
 if (process.env.AIO_API_KEY) {
   reporters.push([
     'aiotests-playwright-reporter',
@@ -18,8 +21,8 @@ if (process.env.AIO_API_KEY) {
         jiraProjectId: process.env.JIRA_PROJECT_KEY || 'KAN',
         cycleDetails: {
           createNewCycle: true,
-          cycleName: `Execution Cycle - KAN-5`,
-          tasks: ['KAN-5']
+          cycleName: `Execution Cycle - ${issueKey}`,
+          tasks: [issueKey]
         },
         addNewRun: true,
         addAttachmentToFailedCases: true
