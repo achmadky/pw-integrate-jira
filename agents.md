@@ -38,5 +38,12 @@ When given a Jira ticket, follow this exact step-by-step framework to prevent ha
 - Run `npx playwright test tests/{issueKey}.spec.ts`.
 - Ensure zero errors, failures, or skipped tests. Debug and fix any locators or assertion mismatches.
 
-### Step 7: Complete & Transition Ticket
+### Step 7: Post Summary Comment to Jira Ticket
+- **Mandatory Reporting Rule:** Before transitioning the ticket, add a detailed comment to the Jira ticket containing:
+  - Total test cases created and their list.
+  - Number of passed tests.
+  - AIO Tests creation & cycle linkage status (Success / Simulated / Failed).
+  - Playwright test script creation status.
+
+### Step 8: Complete & Transition Ticket
 - Transition the Jira ticket status to **"Done"** or **"In Review"**.
