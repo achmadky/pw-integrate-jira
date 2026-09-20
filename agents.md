@@ -4,7 +4,7 @@ This project integrates Jira issue tracking with Playwright test automation usin
 
 ---
 
-## End-to-End QA Automation Workflow (Strict AIO Tests & Playwright Integration)
+## End-to-End QA Automation Workflow (Strict AIO Tests MCP & Playwright Integration)
 
 When given a Jira ticket, follow this exact step-by-step framework to prevent hallucinations and ensure thorough test coverage:
 
@@ -21,12 +21,12 @@ When given a Jira ticket, follow this exact step-by-step framework to prevent ha
   2. Based on actual empirical findings during exploration, generate detailed manual test cases (CSV) at `tests/{issueKey}-test-cases.csv`.
   3. **Crucial Rule on Feasibility:** Only include test cases that are actually possible and feasible to execute in the automated test environment. **Do not include skipped cases or impossible scenarios** (e.g. external payment gateway APIs requiring live sandbox credentials, admin backend controls without auth tokens, etc.). If a case requires external dependencies that are not possible to automate, **omit it entirely** from both the CSV test cases and the test script.
 
-### Step 4: [PREREQUISITE] Create Test Cases & Test Cycle in AIO Tests Linked to Jira Ticket
-- **Mandatory Prerequisite:** Before writing any Playwright test script, you **must**:
-  1. Create the finalized feasible test cases directly in AIO Tests.
-  2. Create a Test Cycle in AIO Tests containing these test cases.
-  3. Ensure both the test cases and test cycle are **explicitly linked to the Jira ticket (`issueKey`)**.
-  4. Perform and record the execution status in AIO Tests.
+### Step 4: [ABSOLUTE MANDATORY PREREQUISITE] Create Test Cases & Test Cycle via AIO Tests MCP
+- **Strict Enforcement Rule:** 
+  1. You **MUST** use AIO Tests MCP / tools to create the test cases in AIO Tests.
+  2. You **MUST** create a Test Cycle in AIO Tests, attach the created test cases to it, and link them to the Jira ticket (`issueKey`).
+  3. You **MUST** execute the test cases within AIO Tests.
+  4. **BLOCKER:** **You are strictly forbidden from proceeding to Step 5 (Playwright test script creation) unless AIO test case creation, cycle creation, and test execution have been successfully completed and confirmed via AIO Tests MCP.**
 
 ### Step 5: Generate Detailed Playwright E2E Test Script
 - **Rules:**
@@ -42,7 +42,7 @@ When given a Jira ticket, follow this exact step-by-step framework to prevent ha
 - **Mandatory Reporting Rule:** Before transitioning the ticket, add a detailed comment to the Jira ticket containing:
   - Total test cases created and their list.
   - Number of passed tests.
-  - AIO Tests creation & cycle linkage status (Success / Simulated / Failed).
+  - AIO Tests creation & cycle linkage status (Confirmed via AIO MCP).
   - Playwright test script creation status.
 
 ### Step 8: Complete & Transition Ticket
