@@ -6,7 +6,11 @@ This project integrates Jira issue tracking with Playwright test automation usin
 
 ## End-to-End QA Automation Workflow (Strict AIO Tests MCP & Playwright Integration)
 
-When given a Jira ticket, follow this exact step-by-step framework to prevent hallucinations and ensure thorough test coverage:
+### Core Mandates & Execution Control
+- **Strict Sequential Execution:** Every single step below (Steps 1 through 8) is strictly mandatory and MUST be completed in exact sequential order. Proceeding to a subsequent step without fully completing and verifying the previous step is strictly forbidden.
+- **Immediate Notification on Blocker/Issue:** If any error, API failure, missing dependency, or unexpected behavior occurs at any step, you MUST immediately inform the user with clear details before attempting any workaround or proceeding further.
+
+---
 
 ### Step 1: Transition Ticket to "In Progress"
 - Call Jira REST API to update the given issue key status to **"In Progress"**.
