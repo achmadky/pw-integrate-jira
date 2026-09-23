@@ -10,6 +10,20 @@ const reporters: any[] = [['html']];
 const issueKey = process.env.JIRA_ISSUE_KEY || 'KAN-5';
 
 if (process.env.AIO_API_KEY) {
+  // If an existing cycle is supplied, reuse it. Otherwise, create one for this ticket.
+  const hasExistingCycle = !!process.env.AIO_CYCLE_KEY;
+
+  const cycleDetails: any = {
+    createNewCycle: !hasExistingCycle,
+    tasks: [issueKey]
+  };
+
+  if (hasExistingCycle) {
+    cycleDetails.cycleKeyToReportTo = process.env.AIO_CYCLE_KEY;
+  } else {
+    cycleDetails.cycleName = `Execution Cycle - ${issueKey}`;
+  }
+
   reporters.push([
     'aiotests-playwright-reporter',
     {
@@ -19,11 +33,7 @@ if (process.env.AIO_API_KEY) {
           apiKey: process.env.AIO_API_KEY
         },
         jiraProjectId: process.env.JIRA_PROJECT_KEY || 'KAN',
-        cycleDetails: {
-          createNewCycle: true,
-          cycleName: `Execution Cycle - ${issueKey}`,
-          tasks: [issueKey]
-        },
+        cycleDetails: cycleDetails,
         addNewRun: true,
         addAttachmentToFailedCases: true
       }

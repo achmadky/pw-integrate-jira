@@ -114,9 +114,10 @@ JIRA_ISSUE_KEY=KAN-10
 6. **Generate Playwright Architecture**:
    - Builds POM classes (`tests/pages/`), custom fixtures (`tests/fixtures/`), test data (`tests/utils/`), and test specs (`tests/e2e/{issueKey}.spec.ts`) tagged with AIO keys (`@KAN-TC-20`).
    - Adds full-page screenshot capture as execution proof.
-7. **Execution & Reporting [Zero-Failure Blocker]**:
-   - Runs `npx playwright test tests/e2e/{issueKey}.spec.ts` and reports results live to AIO Tests Execution Cycles.
-   - Requires 100% pass rate before advancing.
+7. **Execution & Reporting [Zero-Failure Blocker & Cycle Reuse]**:
+   - Runs `JIRA_ISSUE_KEY={issueKey} npx playwright test tests/e2e/{issueKey}.spec.ts`.
+   - Automatically creates an execution cycle on the first run, and reuses that same cycle (`AIO_CYCLE_KEY`) across retries to prevent duplicate data in Jira.
+   - If a test fails, posts a diagnostic failure comment to the Jira ticket immediately, applies fixes, and re-executes against the same cycle until 100% pass rate is achieved.
 8. **Upload Screenshots & Post 3 x N Table with Inline Proof Images**:
    - Uploads screenshot proofs to Jira ticket as attachments (`POST /rest/api/3/issue/{issueKey}/attachments`).
    - Posts a summary comment containing a **3 x N Table** with the actual inline thumbnail images embedded directly in the `Proof` column (`!filename.png|thumbnail!`).
