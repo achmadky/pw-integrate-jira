@@ -81,10 +81,21 @@ This project integrates Jira issue tracking with Playwright test automation usin
   - **MANDATORY SCREENSHOT ATTACHMENT AS PROOF:** Each test MUST capture and attach full-page screenshots as proof of execution using `await testInfo.attach('evidence-screenshot', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })` or `await page.screenshot({ path: ... })`.
 
 ### Step 7: Execute and Validate Playwright Test Suite with AIO Reporter & Evidence Verification
-- Run `npx playwright test tests/e2e/{issueKey}.spec.ts`.
-- Verify results are reported live to the AIO Tests Execution Cycle (`Execution Cycle - {issueKey}`).
-- Ensure test execution screenshots and evidence are captured for every test run.
-- **ZERO FAILURE TOLERANCE:** If any test fails, fix it immediately until 100% pass before proceeding.
+- Run `JIRA_ISSUE_KEY={issueKey} npx playwright test tests/e2e/{issueKey}.spec.ts`.
+- **CYCLE REUSE POLICY:**
+  - On the first run, the reporter automatically creates `Execution Cycle - {issueKey}` (e.g. `KAN-CY-35`).
+  - Capture this created cycle key from the reporter console output.
+  - If any test fails: DO NOT create a new cycle on retry! Set `AIO_CYCLE_KEY={cycleKey}` (e.g. `AIO_CYCLE_KEY=KAN-CY-35 JIRA_ISSUE_KEY={issueKey} npx playwright test ...`) so the reporter updates the existing cycle instead of cluttering Jira.
+- **FAILURE COMMENTING IN JIRA:**
+  - If a test fails during execution: post an immediate diagnostic comment to the Jira ticket with the failure details:
+    ```text
+    QA Test Execution Alert - Failure Detected:
+    - Failed Case: {testCaseKey} - {title}
+    - Error Message: {errorMessage}
+    - Cycle: {cycleKey}
+    Investigating DOM state, applying fix, and re-running...
+    ```
+- **ZERO FAILURE TOLERANCE:** If any test fails, fix the POM or test spec code, re-run with `AIO_CYCLE_KEY={cycleKey}`, and repeat until 100% pass before proceeding to Step 8.
 
 ### Step 8: Upload Screenshots as Jira Attachments & Post 3 x N Table with Inline Proof Images
 - For each executed test case, upload the captured screenshot proof to the Jira issue as an attachment via `POST /rest/api/3/issue/{issueKey}/attachments` with filename `{testCaseKey}-proof.png`.
