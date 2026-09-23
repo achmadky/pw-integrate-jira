@@ -4,10 +4,45 @@ This project integrates Jira issue tracking with Playwright test automation usin
 
 ---
 
+## What is Required to Use This Agent
+
+To run this agent autonomously end-to-end, the following tools, services, and credentials are required:
+
+### 1. System Requirements & CLI Tools
+- **Node.js**: v18.0.0 or higher.
+- **Git**: Installed and configured with SSH authentication (`git@github.com:...`).
+- **GitHub CLI (`gh`)**: Installed (`brew install gh`) and authenticated (`gh auth login`) with `repo` scope to enable automated Pull Request creation.
+- **Package Manager**: `npm` (run `npm install` to install Playwright, Axios, AIO reporter, etc.).
+
+### 2. Atlassian Jira Cloud Account
+- **Jira Cloud Instance**: URL (e.g. `https://your-domain.atlassian.net`).
+- **Jira User Email**: The email address of the account running the automation.
+- **Jira API Token**: Generated from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+- **Permissions**: The Jira user must have permission to:
+  - View, assign, and transition issues (*In Progress*, *In Review*).
+  - Add attachments to issues.
+  - Post issue comments.
+
+### 3. AIO Tests (TCMS for Jira)
+- **AIO Tests Plugin**: Installed in your Jira Cloud instance.
+- **AIO API Key & Tenant ID**: Generated from Jira -> **Apps** -> **AIO Tests** -> **Gear/Settings** -> **MCP Authorization / API**.
+- **Permissions**: Ability to create and publish test cases, create execution cycles, and report test execution results.
+
+### 4. Slack Workspace (Optional for Alerts)
+- **Slack Incoming Webhook URL**: Created via [Slack Apps](https://api.slack.com/apps) -> *Incoming Webhooks* -> *Add New Webhook to Workspace* pointing to your alert channel (e.g. `#qa-automation`).
+
+### 5. AI / Agent Environment
+- An MCP-compatible agent runtime (such as **antigravity** or **opencode**) with `opencode.json` configured to provide:
+  - `jira` MCP server (`@modelcontextprotocol/server-jira`).
+  - `playwright` MCP server (`@playwright/mcp`).
+  - `aio-tests` remote MCP server (`https://tcms-prod-us.aiojiraapps.com/aiotcms-mcp/v1/...`).
+
+---
+
 ## Key Features
 
 - **Pure MCP-Driven Workflow**: Seamless integration with Jira Cloud and AIO Tests using standard MCP servers.
-- **Jira Automation**: Automatically assigns tickets to the active user, transitions statuses (*In Progress*, *In Review*), uploads screenshot proofs, and posts structured 3 x N table summary comments.
+- **Jira Automation**: Automatically assigns tickets to the active user, transitions statuses (*In Progress*, *In Review*), uploads screenshot proofs, and posts structured 3 x N table summary comments with inline thumbnail images.
 - **Dynamic Feature & URL Extraction**: Parses target URLs and feature scopes dynamically from ticket descriptions without hardcoding.
 - **Detailed Manual Test Case Generation**: Produces CSV sheets with rich metadata (Priority, Type, Preconditions, Steps, Expected Result, Test Data), then creates and publishes test cases directly inside **AIO Tests** linked to Jira requirement IDs (`requirements: [numericJiraIssueId]`).
 - **Standardized Playwright Architecture**:
@@ -31,24 +66,18 @@ This project integrates Jira issue tracking with Playwright test automation usin
 ├── opencode.json         # MCP servers configuration (jira, playwright, aio-tests)
 ├── package.json          # Dependencies and test runner scripts
 ├── playwright.config.ts  # Playwright & AIO Tests reporter configuration
+├── .env.example          # Environment variable template
 └── tests/
-    ├── e2e/              # Playwright E2E test specs (e.g. kan-5.spec.ts, kan-9.spec.ts)
-    ├── pages/            # Page Object Model classes (base.page.ts, catalog.page.ts, search.page.ts)
+    ├── e2e/              # Playwright E2E test specs (e.g. kan-5.spec.ts, kan-9.spec.ts, kan-10.spec.ts)
+    ├── pages/            # Page Object Model classes (base.page.ts, catalog.page.ts, search.page.ts, cart.page.ts)
     ├── fixtures/         # Custom Playwright fixtures (page.fixture.ts)
     ├── utils/            # Test data & environment configuration (test-data.ts)
-    └── test-cases/       # Detailed CSV test case sheets (e.g. kan-5-test-cases.csv, kan-9-test-cases.csv)
+    └── test-cases/       # Detailed CSV test case sheets (e.g. kan-5-test-cases.csv, kan-9-test-cases.csv, kan-10-test-cases.csv)
 ```
 
 ---
 
-## Prerequisites & Configuration (`.env`)
-
-1. **Node.js** (v18+ recommended)
-2. **GitHub CLI** (`gh auth login`)
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Environment Configuration (`.env`)
 
 Create your `.env` file at the root of the project:
 
@@ -63,8 +92,11 @@ JIRA_PROJECT_KEY=KAN
 AIO_BASE_URL=https://tcms-prod-us.aiojiraapps.com/aiotcms-mcp/v1/{tenant_id}/mcp
 AIO_API_KEY=your_aio_public_api_token
 
-# Slack Configuration
+# Slack Configuration (Incoming Webhook URL)
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+
+# Target Jira issue key (optional fallback)
+JIRA_ISSUE_KEY=KAN-10
 ```
 
 ---
