@@ -4,10 +4,12 @@ import { BasePage } from './base.page';
 export class CartPage extends BasePage {
   readonly cartUrl: string = 'https://sauce-demo.myshopify.com/cart';
   readonly removeItemButton: Locator;
+  readonly checkoutButton: Locator;
 
   constructor(page: Page) {
     super(page);
     this.removeItemButton = page.locator('a[href*="quantity=0"]').filter({ hasText: /x|remove/i }).locator('visible=true').first();
+    this.checkoutButton = page.locator('input[name="checkout"], button[name="checkout"], input[value*="Check Out" i]').locator('visible=true').first();
   }
 
   async openCart(): Promise<void> {
@@ -32,5 +34,17 @@ export class CartPage extends BasePage {
 
   async verifyCartIsEmpty(): Promise<void> {
     await expect(this.page.locator('body')).toContainText(/empty|continue shopping/i);
+  }
+
+  async proceedToCheckout(): Promise<void> {
+    await expect(this.checkoutButton).toBeVisible();
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {}),
+      this.checkoutButton.click()
+    ]);
+  }
+
+  async verifyCheckoutPageDetails(): Promise<void> {
+    await expect(this.page.locator('body')).toContainText(/checkout|contact|delivery|order summary|payment/i);
   }
 }
