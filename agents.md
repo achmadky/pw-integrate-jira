@@ -86,16 +86,21 @@ This project integrates Jira issue tracking with Playwright test automation usin
 - Ensure test execution screenshots and evidence are captured for every test run.
 - **ZERO FAILURE TOLERANCE:** If any test fails, fix it immediately until 100% pass before proceeding.
 
-### Step 8: Upload Screenshots as Jira Attachments & Post 3 x N Table Summary Comment
+### Step 8: Upload Screenshots as Jira Attachments & Post 3 x N Table with Inline Proof Images
 - For each executed test case, upload the captured screenshot proof to the Jira issue as an attachment via `POST /rest/api/3/issue/{issueKey}/attachments` with filename `{testCaseKey}-proof.png`.
-- Post a structured summary comment containing a **3 x N Table** (`Case Name`, `Proof (Attachment)`, `Result`):
-  - Column 1: `Case Name` (`{testCaseKey}: {title}`)
-  - Column 2: `Proof (Attachment)` (`{testCaseKey}-proof.png (attached to ticket)`)
-  - Column 3: `Result` (`PASSED` / `FAILED`)
-- Below the table, include:
-  - Mention that test cases and execution cycle have been created and linked in AIO Tests.
-  - Confirmation that proof screenshots are attached directly to the Jira ticket.
-  - Final polite closing: `"Let me know if you have any question/clarification. Thanks!"`
+- Post a structured summary comment via Jira API with wiki markup (or ADF) containing a **3 x N Table** with the actual inline thumbnail image in the Proof column:
+  ```text
+  QA Execution Summary:
+
+  || Case Name || Proof || Result ||
+  | {testCaseKey}: {title} | !{testCaseKey}-proof.png|thumbnail! | *PASSED* |
+
+  Test cases and execution cycle ({cycleKey}) have been created and linked to this ticket in AIO Tests.
+  Proof screenshots are embedded above and attached directly to this Jira issue.
+
+  Let me know if you have any question/clarification. Thanks!
+  ```
+- Verify the comment renders the inline thumbnail image directly inside the table cell on the Jira ticket.
 
 ### Step 9: Complete & Transition Ticket via Jira MCP Tool
 - Use Jira MCP tool to transition ticket status to **"Done"** or **"In Review"**.
