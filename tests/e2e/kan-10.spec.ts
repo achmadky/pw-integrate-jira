@@ -4,7 +4,7 @@ import path from 'path';
 
 test.describe('KAN-10: Remove from my cart End-to-End Tests', () => {
 
-  test('KAN-TC-22: Add Grey Jacket to cart and remove it successfully', { tag: '@KAN-TC-22' }, async ({ catalogPage, cartPage }, testInfo) => {
+  test('KAN-TC-28: Add Grey Jacket to cart and remove it successfully', { tag: '@KAN-TC-28' }, async ({ catalogPage, cartPage }, testInfo) => {
     await test.step('Step 1: Open Grey Jacket product page', async () => {
       await catalogPage.openStorefront(TEST_DATA.productUrl);
       await catalogPage.verifyProductPage(TEST_DATA.productPrice);
@@ -30,13 +30,13 @@ test.describe('KAN-10: Remove from my cart End-to-End Tests', () => {
     });
 
     await test.step('Step 6: Save proof screenshot', async () => {
-      const screenshotPath = path.resolve('test-results', 'KAN-TC-22-proof.png');
+      const screenshotPath = path.resolve('test-results', 'KAN-TC-28-proof.png');
       await cartPage.page.screenshot({ path: screenshotPath, fullPage: true });
-      await testInfo.attach('KAN-TC-22-proof.png', { path: screenshotPath, contentType: 'image/png' });
+      await testInfo.attach('KAN-TC-28-proof.png', { path: screenshotPath, contentType: 'image/png' });
     });
   });
 
-  test('KAN-TC-23: Verify empty cart state displays appropriate message', { tag: '@KAN-TC-23' }, async ({ cartPage }, testInfo) => {
+  test('KAN-TC-29: Verify empty cart state displays appropriate message', { tag: '@KAN-TC-29' }, async ({ cartPage }, testInfo) => {
     await test.step('Step 1: Open empty My Cart page', async () => {
       await cartPage.openCart();
     });
@@ -46,9 +46,9 @@ test.describe('KAN-10: Remove from my cart End-to-End Tests', () => {
     });
 
     await test.step('Step 3: Save proof screenshot', async () => {
-      const screenshotPath = path.resolve('test-results', 'KAN-TC-23-proof.png');
+      const screenshotPath = path.resolve('test-results', 'KAN-TC-29-proof.png');
       await cartPage.page.screenshot({ path: screenshotPath, fullPage: true });
-      await testInfo.attach('KAN-TC-23-proof.png', { path: screenshotPath, contentType: 'image/png' });
+      await testInfo.attach('KAN-TC-29-proof.png', { path: screenshotPath, contentType: 'image/png' });
     });
   });
 
