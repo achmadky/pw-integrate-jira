@@ -122,9 +122,9 @@ JIRA_ISSUE_KEY=KAN-10
    - Uploads screenshot proofs to Jira ticket as attachments (`POST /rest/api/3/issue/{issueKey}/attachments`).
    - Posts a summary comment containing a **3 x N Table** with the actual inline thumbnail images embedded directly in the `Proof` column (`!filename.png|thumbnail!`).
 9. **Review Transition**: Transitions the Jira ticket status to **"In Review"**.
-10. **GitHub PR Creation [User Confirmation Blocker]**:
-    - Asks user for explicit confirmation before git/PR actions.
-    - Creates branch `agent/feat/{issueKey}-{kebab-summary}`.
-    - Commits with `feat({issueKey}): {jiraSummary}` and pushes to remote.
+10. **GitHub PR Creation via Isolated Git Worktree**:
+    - Runs in a dedicated git worktree (`.worktrees/{issueKey}/`) branched from latest `main`.
+    - Automatically pulls latest `main` via rebase to ensure zero conflicts.
+    - Commits (`feat({issueKey}): {jiraSummary}`) and pushes directly to `agent/feat/{issueKey}-{kebab-summary}`.
     - Opens Pull Request via `gh pr create` strictly scoped to `pw-integrate-jira`.
-11. **Automated Slack Alert**: Dispatches a structured Block Kit card to `SLACK_WEBHOOK_URL` containing Jira link, test results, AIO cycle key, and verified PR URL.
+11. **Automated Slack Alert**: Dispatches a structured Block Kit card to `SLACK_WEBHOOK_URL` containing Jira link, test results, AIO cycle key, and verified PR URL. Once the PR is merged, the worktree is cleaned up via `git worktree remove .worktrees/{issueKey}`.

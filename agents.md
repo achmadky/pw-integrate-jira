@@ -10,10 +10,18 @@ This project integrates Jira issue tracking with Playwright test automation usin
 - **Strict Sequential Execution:** Every step below (Steps 1 through 11) is strictly mandatory and MUST be completed in exact sequential order.
 - **Assignee Rule:** Before transitioning a ticket from "To Do" to "In Progress", assign the Jira issue to yourself/current user via Jira MCP tool (`jira_update_issue` / `jira_assign_issue`).
 - **PURE MCP MANDATE:** All Jira operations (assigning, transitioning status, commenting) and AIO Tests operations (`create_test_case`, `update_test_case`, `search_test_cases`, `get_test_case`) MUST be executed strictly through MCP tools. No custom runner/helper scripts.
-- **EXPLICIT USER CONSENT & STRICT SCOPE FOR GIT / GH CLI:**
-  - Operating on or pushing to ANY repository other than `pw-integrate-jira` (`achmadky/pw-integrate-jira`) is strictly forbidden. Any change of target project requires explicit user request and re-authorization.
-  - The `gh` CLI may ONLY be used for opening Pull Requests (`gh pr create`) on `pw-integrate-jira`. No other `gh` commands are permitted.
-  - NEVER commit (`git commit`), create branches (`git checkout -b`), push (`git push`), or open PRs (`gh pr create`) automatically or randomly. You MUST always ask and receive explicit confirmation from the user before executing ANY git commit, push, or PR command.
+- **GIT WORKTREE ISOLATION & PARALLEL EXECUTION:**
+  - Every ticket MUST be executed in its own dedicated git worktree located at `.worktrees/{issueKey}/`.
+  - The agent initializes the worktree from latest `origin/main` without affecting the main working tree or other ticket sessions:
+    ```bash
+    git fetch origin main && git worktree add -b agent/feat/{issueKey}-{kebab-summary} .worktrees/{issueKey} origin/main
+    ```
+  - Symlink or copy `.env` into `.worktrees/{issueKey}/.env` to supply required credentials.
+  - All subsequent steps (exploratory testing, test writing, execution, commit, push, PR creation) run strictly with `workdir=.worktrees/{issueKey}`.
+  - Once the PR is merged, the worktree is cleanly removed: `git worktree remove .worktrees/{issueKey}`.
+- **AUTONOMOUS WORKTREE PUSHES & MAIN PROTECTION:**
+  - Pushing to `main` directly is strictly forbidden under all circumstances.
+  - Because worktrees isolate ticket branches completely, the agent is authorized to commit and push autonomously to its dedicated feature branch (`agent/feat/{issueKey}-{kebab-summary}`) and create the PR once all Playwright tests pass 100%. User confirmation is not required for worktree feature branch pushes.
 - **STRICT STEP 5 MANDATORY VERIFICATION BLOCKER:**
   You are STRICTLY FORBIDDEN from proceeding to Step 6 (Playwright script creation), Step 7, or Step 9 (Ticket Completion) UNLESS ALL of the following 4 conditions are verified:
   1. **AIO Case Creation**: Test cases MUST be created in AIO Tests via MCP (`create_test_case`) with `status: "Published"`.
@@ -27,11 +35,10 @@ This project integrates Jira issue tracking with Playwright test automation usin
   - Repeat until 100% of test cases pass with ZERO failures and ZERO errors. Only completely passing suites may advance.
 - **STRICT STEP 10 PR CREATION VERIFICATION BLOCKER:**
   You are STRICTLY FORBIDDEN from proceeding to Step 11 (Slack Notification) unless:
-  1. User gives explicit confirmation to commit, push, and create PR.
-  2. Git branch is created with standardized format `agent/feat/{issueKey}-{kebab-summary}` (e.g. `agent/feat/KAN-9-search-feature`).
-  3. Changes are committed with message `feat({issueKey}): {jiraSummary}` and pushed cleanly to `origin`.
-  4. Pull Request is created via `gh pr create` with title `feat({issueKey}): {jiraSummary}` and outputs a valid live GitHub PR URL.
-  5. If `gh pr create` fails or encounters any error (e.g. merge conflict, validation failure, network issue), STOP IMMEDIATELY, fix the error, and re-attempt until a valid PR URL is generated. DO NOT proceed to Step 11 without a verified live PR URL.
+  1. All Playwright tests in Step 7 passed 100% with zero failures.
+  2. Changes are committed inside `.worktrees/{issueKey}` with message `feat({issueKey}): {jiraSummary}` and pushed cleanly to `origin/agent/feat/{issueKey}-{kebab-summary}`.
+  3. Pull Request is created via `gh pr create` with title `feat({issueKey}): {jiraSummary}` and outputs a valid live GitHub PR URL.
+  4. If `gh pr create` fails or encounters any error (e.g. merge conflict, validation failure, network issue), STOP IMMEDIATELY, fix the error, and re-attempt until a valid PR URL is generated. DO NOT proceed to Step 11 without a verified live PR URL.
 
 ---
 
@@ -116,11 +123,9 @@ This project integrates Jira issue tracking with Playwright test automation usin
 ### Step 9: Complete & Transition Ticket via Jira MCP Tool
 - Use Jira MCP tool to transition ticket status to **"Done"** or **"In Review"**.
 
-### Step 10: Ask User Confirmation, Commit, Push & Create GitHub PR via gh CLI [STRICT BLOCKER]
-- Ask the user for explicit confirmation before taking any git/PR action:
-  `"Playwright tests passed with 0 failures. May I commit the changes to branch agent/feat/{issueKey}-{kebab-summary}, push to origin, and create a Pull Request for pw-integrate-jira?"`
-- Once confirmed:
-  1. Create branch: `git checkout -b agent/feat/{issueKey}-{kebab-summary}`
+### Step 10: Commit, Push & Create GitHub PR from Isolated Worktree [STRICT BLOCKER]
+- Inside the dedicated ticket worktree (`workdir=.worktrees/{issueKey}`):
+  1. Pull latest `main` to ensure zero merge conflicts: `git pull origin main --rebase`
   2. Stage and commit: `git add tests/ tests/test-cases/ && git commit -m "feat({issueKey}): {jiraSummary}"`
   3. Push to remote: `git push -u origin agent/feat/{issueKey}-{kebab-summary}`
   4. Create PR via `gh` CLI strictly scoped to `pw-integrate-jira`:

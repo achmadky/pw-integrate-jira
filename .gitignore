@@ -12,3 +12,6 @@ playwright/.cache/
 
 # Build artifacts
 dist/
+
+# Git worktrees (isolated agent workspaces)
+.worktrees/
