@@ -62,7 +62,18 @@ Read the updated `tests/test-cases/{issueKey}-test-cases.csv` containing verifie
 - Every page class MUST extend `BasePage` (`tests/pages/base.page.ts`).
 - Test specs must read like pure human acceptance criteria and business logic.
 
-#### 2. Centralized Proof Capture (`BasePage.captureProof`)
+#### 2. Mandatory Acceptance Criteria & Dynamic State Assertions (Strict Zero-False-Positive Mandate)
+- **Zero Surface-Level Assertions:** Never claim a test step succeeded merely because a button was clicked, a form was submitted, or a URL was requested. Clicking an action is NOT verification of the action.
+- **Explicit Post-Condition Verification:** Every test step MUST empirically assert that the application state changed to match the ticket's Acceptance Criteria before advancing to the next step:
+  - *State Change Verification:* Assert the actual resulting state (e.g. success banner, updated data record, destination page element, counter update, or rendered output).
+  - *Inverse State Verification:* Assert that the pre-action or transitional state is no longer active (e.g. form is no longer editable, loading spinner gone, unauthenticated state cleared, initial screen exited).
+- **Captcha / Bot-Blocker Honesty Rule:**
+  - If a step is blocked by Captcha, Cloudflare challenge, rate limit, or bot protection, the test MUST FAIL immediately at that step.
+  - The agent is STRICTLY FORBIDDEN from bypassing the failed step, ignoring the lack of state transition, or continuing the test as if it succeeded.
+  - The agent MUST explicitly report the failure and exact root cause (e.g. "hCaptcha challenge blocked automated customer login on /account/login") to the user and in the Jira ticket comment. NEVER mask a blocked step or failed state as a pass.
+- **Fail Fast on Incomplete State Transitions:** If an action fails to trigger its intended state change (e.g. form remains unsubmitted, page does not redirect, data does not persist), the test MUST fail immediately. Never weaken, soften, or omit assertions to force an artificial pass. Investigate the failure, fix the underlying interaction if it is a scripting issue, or flag the legitimate defect/blocker.
+
+#### 3. Centralized Proof Capture (`BasePage.captureProof`)
 - Proof screenshot capture is defined ONCE in `BasePage`:
   ```typescript
   async captureProof(testInfo: TestInfo, filename: string): Promise<string> {
@@ -72,11 +83,11 @@ Read the updated `tests/test-cases/{issueKey}-test-cases.csv` containing verifie
     return fullPath;
   }
   ```
-- Spec files MUST capture execution proof using the clean one-liner:
+- Spec files MUST capture execution proof using the clean one-liner immediately after acceptance assertions pass:
   `await pageObj.captureProof(testInfo, '{testCaseKey}-proof.png');`
 - Do NOT write duplicate 4-line screenshot boilerplate in spec files.
 
-#### 3. Accessibility-First Semantic Locators & Resilient Fallback Chains (`.or()`)
+#### 4. Accessibility-First Semantic Locators & Resilient Fallback Chains (`.or()`)
 - Follow Playwright's accessibility locator hierarchy:
   1. `page.getByRole(...)` (Primary for buttons, links, searchboxes, headings)
   2. `page.getByLabel(...)` (Primary for form inputs with labels)
@@ -92,21 +103,21 @@ Read the updated `tests/test-cases/{issueKey}-test-cases.csv` containing verifie
   ```
 - This provides deterministic element resilience without flaky third-party plugins.
 
-#### 4. Web-First Polling Assertions & Zero-Flakiness Synchronization
+#### 5. Web-First Polling Assertions & Zero-Flakiness Synchronization
 - Always assert UI states using Playwright's web-first polling assertions: `await expect(locator).toBeVisible()`, `await expect(locator).toHaveText()`, `await expect(page).toHaveURL()`.
 - **Strictly Banned:**
   - `page.waitForTimeout(...)` (Hardcoded sleeps are forbidden).
   - Non-polling checks like `if (await locator.isVisible())` or `expect(await locator.isVisible()).toBe(true)`.
 
-#### 5. Dependency Injection via Custom Fixtures
+#### 6. Dependency Injection via Custom Fixtures
 - All Page Objects MUST be registered as typed fixtures in `tests/fixtures/page.fixture.ts`.
 - Specs MUST receive page instances via dependency injection in the test parameter (`{ catalogPage, cartPage }`). No manual `new PageObject(page)` instantiations in specs.
 
-#### 6. Authentication & Session Strategy
+#### 7. Authentication & Session Strategy
 - **Post-Auth Features:** Reuse authenticated sessions via `storageState` to bypass repetitive UI logins.
 - **Login Testing (Negative/Edge/Forms):** Use isolated guest contexts (`test.use({ storageState: { cookies: [], origins: [] } })`) to explicitly test credentials and error banners.
 
-#### 7. Spec File Structure
+#### 8. Spec File Structure
 Build `tests/e2e/{issueKey}.spec.ts` strictly mapped to all CSV test cases using:
 - Real AIO test tags (e.g. `{ tag: '@KAN-TC-16' }`).
 - Injected Page Object fixtures.
