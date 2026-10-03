@@ -8,8 +8,19 @@ export class CartPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.removeItemButton = page.locator('a[href*="quantity=0"]').filter({ hasText: /x|remove/i }).locator('visible=true').first();
-    this.checkoutButton = page.locator('input[name="checkout"], button[name="checkout"], input[value*="Check Out" i]').locator('visible=true').first();
+    // Semantic locator with resilient fallback chain
+    this.removeItemButton = page.getByRole('link', { name: /remove|delete/i })
+      .or(page.locator('a[href*="quantity=0"]'))
+      .or(page.locator('a.removeLine'))
+      .filter({ hasText: /x|remove/i })
+      .locator('visible=true')
+      .first();
+    this.checkoutButton = page.getByRole('button', { name: /check out|checkout/i })
+      .or(page.locator('input[name="checkout"]'))
+      .or(page.locator('button[name="checkout"]'))
+      .or(page.locator('input[value*="Check Out" i]'))
+      .locator('visible=true')
+      .first();
   }
 
   async openCart(): Promise<void> {
@@ -38,10 +49,8 @@ export class CartPage extends BasePage {
 
   async proceedToCheckout(): Promise<void> {
     await expect(this.checkoutButton).toBeVisible();
-    await Promise.all([
-      this.page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {}),
-      this.checkoutButton.click()
-    ]);
+    await this.checkoutButton.click();
+    await this.waitForPageLoad();
   }
 
   async verifyCheckoutPageDetails(): Promise<void> {

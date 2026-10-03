@@ -1,10 +1,9 @@
 import { test, expect } from '../fixtures/page.fixture';
 import { TEST_DATA } from '../utils/test-data';
-import path from 'path';
 
 test.describe('KAN-11: Login and add cart checkout End-to-End Tests', () => {
 
-  test('KAN-TC-24: Sign in and search for Grey jacket then verify in search results', { tag: '@KAN-TC-24' }, async ({ loginPage, searchPage }, testInfo) => {
+  test('KAN-TC-30: Sign in and search for Grey jacket then verify in search results', { tag: '@KAN-TC-30' }, async ({ loginPage, searchPage }, testInfo) => {
     await test.step('Step 1: Open Login page and authenticate', async () => {
       await loginPage.openLogin();
       await loginPage.login('qates@gmail.com', 'qates');
@@ -20,21 +19,18 @@ test.describe('KAN-11: Login and add cart checkout End-to-End Tests', () => {
     });
 
     await test.step('Step 4: Save proof screenshot', async () => {
-      const screenshotPath = path.resolve('test-results', 'KAN-TC-24-proof.png');
-      await searchPage.page.screenshot({ path: screenshotPath, fullPage: true });
-      await testInfo.attach('KAN-TC-24-proof.png', { path: screenshotPath, contentType: 'image/png' });
+      await searchPage.captureProof(testInfo, 'KAN-TC-30-proof.png');
     });
   });
 
-  test('KAN-TC-25: Add Grey Jacket to cart and proceed to Checkout page with payment details', { tag: '@KAN-TC-25' }, async ({ catalogPage, cartPage }, testInfo) => {
+  test('KAN-TC-31: Add Grey Jacket to cart and proceed to Checkout page with payment details', { tag: '@KAN-TC-31' }, async ({ catalogPage, cartPage }, testInfo) => {
     await test.step('Step 1: Navigate to Grey Jacket product page', async () => {
       await catalogPage.openStorefront(TEST_DATA.productUrl);
       await catalogPage.verifyProductPage(TEST_DATA.productPrice);
     });
 
     await test.step('Step 2: Add Grey Jacket to cart', async () => {
-      await catalogPage.page.locator('input#add').click();
-      await catalogPage.page.waitForLoadState('networkidle');
+      await catalogPage.addToCart();
     });
 
     await test.step('Step 3: Navigate to My Cart page and verify item presence', async () => {
@@ -48,9 +44,7 @@ test.describe('KAN-11: Login and add cart checkout End-to-End Tests', () => {
     });
 
     await test.step('Step 5: Save proof screenshot', async () => {
-      const screenshotPath = path.resolve('test-results', 'KAN-TC-25-proof.png');
-      await cartPage.page.screenshot({ path: screenshotPath, fullPage: true });
-      await testInfo.attach('KAN-TC-25-proof.png', { path: screenshotPath, contentType: 'image/png' });
+      await cartPage.captureProof(testInfo, 'KAN-TC-31-proof.png');
     });
   });
 

@@ -9,9 +9,20 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.locator('#customer_email, input[name="customer[email]"]').first();
-    this.passwordInput = page.locator('#customer_password, input[name="customer[password]"]').first();
-    this.signInButton = page.locator('form[action*="login"] input[type="submit"][value*="Sign In" i], form[action*="login"] button[type="submit"]').first();
+    // Semantic locator with resilient fallback chain
+    this.emailInput = page.getByRole('textbox', { name: /email/i })
+      .or(page.getByLabel(/email/i))
+      .or(page.locator('#customer_email'))
+      .or(page.locator('input[name="customer[email]"]'))
+      .first();
+    this.passwordInput = page.getByLabel(/password/i)
+      .or(page.locator('#customer_password'))
+      .or(page.locator('input[name="customer[password]"]'))
+      .first();
+    this.signInButton = page.getByRole('button', { name: /sign in/i })
+      .or(page.locator('form[action*="login"] input[type="submit"][value*="Sign In" i]'))
+      .or(page.locator('form[action*="login"] button[type="submit"]'))
+      .first();
   }
 
   async openLogin(): Promise<void> {
@@ -25,6 +36,6 @@ export class LoginPage extends BasePage {
     await expect(this.passwordInput).toBeVisible();
     await this.passwordInput.fill(pass);
     await this.signInButton.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.waitForPageLoad();
   }
 }

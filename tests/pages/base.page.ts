@@ -1,4 +1,5 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect, TestInfo } from '@playwright/test';
+import path from 'path';
 
 export abstract class BasePage {
   readonly page: Page;
@@ -7,8 +8,8 @@ export abstract class BasePage {
     this.page = page;
   }
 
-  async navigate(path: string): Promise<void> {
-    await this.page.goto(path);
+  async navigate(pathUrl: string): Promise<void> {
+    await this.page.goto(pathUrl);
   }
 
   async waitForPageLoad(): Promise<void> {
@@ -17,5 +18,12 @@ export abstract class BasePage {
 
   async verifyTitle(titleRegex: RegExp): Promise<void> {
     await expect(this.page).toHaveTitle(titleRegex);
+  }
+
+  async captureProof(testInfo: TestInfo, filename: string): Promise<string> {
+    const screenshotPath = path.resolve('test-results', filename);
+    await this.page.screenshot({ path: screenshotPath, fullPage: true });
+    await testInfo.attach(filename, { path: screenshotPath, contentType: 'image/png' });
+    return screenshotPath;
   }
 }
