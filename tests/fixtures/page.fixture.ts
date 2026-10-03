@@ -3,12 +3,14 @@ import { CatalogPage } from '../pages/catalog.page';
 import { SearchPage } from '../pages/search.page';
 import { CartPage } from '../pages/cart.page';
 import { LoginPage } from '../pages/login.page';
+import { RegisterPage } from '../pages/register.page';
 
 type QAStoryFixtures = {
   catalogPage: CatalogPage;
   searchPage: SearchPage;
   cartPage: CartPage;
   loginPage: LoginPage;
+  registerPage: RegisterPage;
 };
 
 export const test = base.extend<QAStoryFixtures>({
@@ -27,6 +29,10 @@ export const test = base.extend<QAStoryFixtures>({
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await use(loginPage);
+  },
+  registerPage: async ({ page }, use) => {
+    const registerPage = new RegisterPage(page);
+    await use(registerPage);
   },
 });
 
