@@ -8,6 +8,7 @@ This project integrates Jira issue tracking with Playwright test automation usin
 
 ### Execution Mandates
 - **Sequential Execution:** Steps 1 through 11 are strictly mandatory and must be executed in exact sequential order.
+- **Ticket Focus & Parallel Disambiguation:** When a Jira ticket is assigned or requested, the agent focuses on that specific ticket by default. If multiple tickets are mentioned, or if working on related tickets could be helpful, always prompt and ask the user for confirmation first before touching, creating test cases for, or executing scripts for any other ticket. All current exploratory testing, AIO sync, test generation, and reporting stay scoped to the requested `issueKey` unless the user explicitly instructs otherwise.
 - **Pure MCP Mandate:** All Jira operations (assigning, transitioning status, commenting) and AIO Tests operations (`create_test_case`, `update_test_case`, `search_test_cases`, `get_test_case`) MUST be executed strictly through MCP tools. No custom runner/helper scripts.
 - **Worktree Isolation:** Every ticket runs in its own git worktree at `.worktrees/{issueKey}/` branched from `origin/main`.
 - **Protected Main:** Pushing directly to `main` is strictly forbidden.
@@ -25,12 +26,19 @@ This project integrates Jira issue tracking with Playwright test automation usin
 - Fetch summary, description, numeric issue ID (`requirements: [numericJiraIssueId]`), and acceptance criteria via Jira MCP.
 - Dynamically parse the target URL and feature scope. Never assume or hardcode any domain or feature logic.
 
-### Step 4: Perform Exploratory Smoke Testing & Generate Detailed CSV Test Cases
+### Step 4: Perform Exploratory Smoke Testing & Generate Comprehensive CSV Test Cases
 - Use Playwright MCP / web tools to navigate to and inspect the target URL's DOM elements and interactive components.
-- Enumerate all feasible, grounded test cases covering **Happy Path**, **Negative**, and **Edge/Boundary** scenarios for the ticket's specific feature.
+- **Comprehensive Coverage Matrix (Anti-Duplication Standard):**
+  Enumerate distinct, non-redundant test cases covering the complete feature boundary. Every generated test case MUST provide unique test value across these dimensions:
+  1. **Core Happy Path / Primary Acceptance:** The primary intended flow fulfilling the acceptance criteria.
+  2. **Negative & Error Handling:** Invalid inputs, blank submissions, unauthorized access, or bypass attempts.
+  3. **Boundary & Edge Scenarios:** Depleted stock, zero/max quantities, special characters, extreme query lengths.
+  4. **State Persistence & Cross-View Consistency:** Page refreshes, cross-view badge/status consistency (e.g. catalog vs search vs PDP), cart counter accuracy.
+  - **Deduplication Rule:** If two scenarios test the exact same code path or verify identical UI assertions under slightly different wording, DO NOT create redundant test cases. Merge them or keep only the highest-value scenario.
 - Write detailed test cases to `tests/test-cases/{issueKey}-test-cases.csv` with full context:
   - Columns: `Test Case ID`, `Title`, `Priority`, `Type`, `Preconditions`, `Steps`, `Expected Result`, `Test Data`, `Feasibility (Can/Cannot)`.
   - Include explicit data inputs (e.g. product names, quantities, form inputs, URLs) in `Test Data`.
+  - Mark `Feasibility` accurately (`Can` for automatable E2E flows, `Cannot` for manual-only/hardware/OTP flows).
   - The `Test Case ID` column is left blank initially until Step 5.
 
 ### Step 5: [BLOCKER] Create Detailed Test Cases in AIO Tests, Link Jira Requirement, Attach to Cycle & Update CSV
