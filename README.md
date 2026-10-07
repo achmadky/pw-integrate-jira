@@ -1,6 +1,6 @@
 # AI-Powered Jira to Playwright Automation Framework
 
-This project integrates Jira issue tracking with Playwright test automation using AI via Model Context Protocol (MCP) servers (`jira` MCP, `playwright` MCP, and `aio-tests` MCP). It follows a strict 11-step QA workflow inspired by industry-standard QA skills (`manual-test-case-generator`, `playwright-e2e`, and `aiotests-playwright-reporter`).
+This project integrates Jira issue tracking with Playwright test automation using AI via Model Context Protocol (MCP) servers (`jira` MCP, `playwright` MCP, and `aio-tests` MCP). It enforces a strict 11-step QA workflow inspired by industry-standard QA skills (`manual-test-case-generator`, `playwright-e2e`, and `aiotests-playwright-reporter`).
 
 ---
 
@@ -18,10 +18,7 @@ To run this agent autonomously end-to-end, the following tools, services, and cr
 - **Jira Cloud Instance**: URL (e.g. `https://your-domain.atlassian.net`).
 - **Jira User Email**: The email address of the account running the automation.
 - **Jira API Token**: Generated from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-- **Permissions**: The Jira user must have permission to:
-  - View, assign, and transition issues (*In Progress*, *In Review*).
-  - Add attachments to issues.
-  - Post issue comments.
+- **Permissions**: The Jira user must have permission to view/assign/transition issues (*In Progress*, *In Review*), add attachments, and post comments.
 
 ### 3. AIO Tests (TCMS for Jira)
 - **AIO Tests Plugin**: Installed in your Jira Cloud instance.
@@ -39,22 +36,59 @@ To run this agent autonomously end-to-end, the following tools, services, and cr
 
 ---
 
-## Key Features
+## Playwright Architecture & Engineering Standards
 
-- **Pure MCP-Driven Workflow**: Seamless integration with Jira Cloud and AIO Tests using standard MCP servers.
-- **Jira Automation**: Automatically assigns tickets to the active user, transitions statuses (*In Progress*, *In Review*), uploads screenshot proofs, and posts structured 3 x N table summary comments with inline thumbnail images.
-- **Dynamic Feature & URL Extraction**: Parses target URLs and feature scopes dynamically from ticket descriptions without hardcoding.
-- **Detailed Manual Test Case Generation**: Produces CSV sheets with rich metadata (Priority, Type, Preconditions, Steps, Expected Result, Test Data), then creates and publishes test cases directly inside **AIO Tests** linked to Jira requirement IDs (`requirements: [numericJiraIssueId]`).
-- **Standardized Playwright Architecture**:
-  - **Page Object Model (POM)** (`tests/pages/`)
-  - **Custom Fixtures** (`tests/fixtures/`)
-  - **Centralized Test Data** (`tests/utils/`)
-  - **Step-Level Diagnostic Tracing** (`test.step(...)`)
-  - **Web-First Assertions & User-Centric Locators** (`getByRole`, `getByText`, etc.)
-  - **Screenshot Proof Capture** (`testInfo.attach(...)`)
-- **Automated AIO Cycle Reporting**: Executes Playwright test suites and reports results live to AIO Tests Execution Cycles (`aiotests-playwright-reporter`).
-- **GitHub Pull Request Integration**: Automatically creates standardized branches (`agent/feat/{issueKey}-{kebab-summary}`) and opens Pull Requests via `gh pr create` after user confirmation.
-- **Slack Alerting**: Automatically dispatches rich Block Kit notifications to Slack channels with Jira links, test results, AIO cycle keys, and live PR URLs.
+The framework enforces industry best practices for resilience, accessibility, and maintainability:
+
+### 1. Strict Page Object Model (POM) Encapsulation
+- **Zero Raw Locators in Specs**: Spec files (`tests/e2e/{issueKey}.spec.ts`) are strictly forbidden from calling `page.locator()`, `page.getByRole()`, or CSS selectors directly.
+- **Business-Level Test Specs**: All element definitions, actions, clicks, fills, and element-level waits live inside dedicated Page Object classes under `tests/pages/` (e.g. `catalogPage.addToCart()`, `cartPage.proceedToCheckout()`). Spec files read like pure human acceptance criteria.
+- **BasePage Inheritance**: Every page object class extends `BasePage` (`tests/pages/base.page.ts`).
+
+### 2. Accessibility-First Semantic Locators & Resilient Fallback Chains (`.or()`)
+- **Accessibility Hierarchy**: Elements are queried via the browser's Accessibility Tree rather than fragile DOM classes:
+  1. `page.getByRole(...)` (Primary: buttons, links, searchboxes, headings)
+  2. `page.getByLabel(...)` (Primary: inputs with accessible form labels)
+  3. `page.getByPlaceholder(...)` (Inputs with placeholder text)
+  4. `page.getByText(...)` (Non-interactive static text)
+  5. `page.getByTestId(...)` (Fallback QA attribute)
+- **Native Fallback Chains (`.or()` & `.first()`)**: To withstand responsive layout differences and theme redesigns without flaky third-party AI plugins:
+  ```typescript
+  readonly addToCartButton = this.page.getByRole('button', { name: /add to cart|buy/i })
+    .or(this.page.locator('input#add'))
+    .first();
+  ```
+
+### 3. Centralized Proof Capture (`BasePage.captureProof`)
+- Proof screenshot capture is centralized in `BasePage`:
+  ```typescript
+  async captureProof(testInfo: TestInfo, filename: string): Promise<string> {
+    const fullPath = path.resolve('test-results', filename);
+    await this.page.screenshot({ path: fullPath, fullPage: true });
+    await testInfo.attach(filename, { path: fullPath, contentType: 'image/png' });
+    return fullPath;
+  }
+  ```
+- Spec files capture evidence using a clean one-liner: `await pageObj.captureProof(testInfo, '{testCaseKey}-proof.png')`.
+
+### 4. Mandatory State Assertions & Anti-False-Positive Mandate
+- **Zero Surface-Level Assertions**: Never claim a test step succeeded merely because a button was clicked or a form was submitted.
+- **Explicit Post-Condition Verification**: Every action must empirically verify the resulting state before advancing (e.g. state change indicator, success banner, destination page element, counter update, or rendered output).
+- **Captcha / Bot-Blocker Honesty**: If a step is blocked by Captcha, Cloudflare, rate limits, or bot protection, the test must fail immediately at that step. Bypassing or masking blocked steps as passing is strictly forbidden.
+
+### 5. Web-First Polling Assertions & Zero-Flakiness Synchronization
+- Always assert UI states using Playwright's web-first polling assertions: `await expect(locator).toBeVisible()`, `await expect(locator).toHaveText()`, `await expect(page).toHaveURL()`.
+- **Strictly Banned**:
+  - `page.waitForTimeout(...)` (Hardcoded static sleeps).
+  - Non-polling checks like `if (await locator.isVisible())`.
+
+### 6. Dependency Injection via Custom Fixtures
+- All Page Objects are registered as typed fixtures in `tests/fixtures/page.fixture.ts`.
+- Specs receive page instances via dependency injection in test parameters: `test('scenario', async ({ catalogPage, cartPage }) => { ... })`.
+
+### 7. Authentication & Session Strategy
+- **Post-Auth Features**: Reuse pre-authenticated sessions via `storageState` to bypass repetitive UI logins.
+- **Login Testing (Negative/Edge/Forms)**: Use isolated guest contexts (`test.use({ storageState: { cookies: [], origins: [] } })`) to explicitly test credentials and error banners.
 
 ---
 
@@ -69,10 +103,10 @@ To run this agent autonomously end-to-end, the following tools, services, and cr
 ├── .env.example          # Environment variable template
 └── tests/
     ├── e2e/              # Playwright E2E test specs (e.g. kan-5.spec.ts, kan-9.spec.ts, kan-10.spec.ts)
-    ├── pages/            # Page Object Model classes (base.page.ts, catalog.page.ts, search.page.ts, cart.page.ts)
+    ├── pages/            # Page Object Model classes (base.page.ts, catalog.page.ts, search.page.ts, cart.page.ts, register.page.ts)
     ├── fixtures/         # Custom Playwright fixtures (page.fixture.ts)
     ├── utils/            # Test data & environment configuration (test-data.ts)
-    └── test-cases/       # Detailed CSV test case sheets (e.g. kan-5-test-cases.csv, kan-9-test-cases.csv, kan-10-test-cases.csv)
+    └── test-cases/       # Comprehensive CSV test case sheets (e.g. kan-5-test-cases.csv, kan-12-test-cases.csv)
 ```
 
 ---
@@ -96,7 +130,7 @@ AIO_API_KEY=your_aio_public_api_token
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 
 # Target Jira issue key (optional fallback)
-JIRA_ISSUE_KEY=KAN-10
+JIRA_ISSUE_KEY=KAN-12
 ```
 
 ---
@@ -105,15 +139,22 @@ JIRA_ISSUE_KEY=KAN-10
 
 1. **Assign Ticket**: Assigns the Jira issue to the current user via Jira MCP / API.
 2. **Transition Status**: Updates ticket status from "To Do" to **"In Progress"**.
-3. **Fetch & Parse**: Retrieves issue details and extracts the target URL dynamically.
-4. **Exploratory Testing & CSV**: Explores the target URL and writes detailed test cases (with Priority, Type, Steps, Expected Result, Test Data) to `tests/test-cases/{issueKey}-test-cases.csv` (leaving `Test Case ID` blank).
+3. **Fetch & Parse**: Retrieves issue details, acceptance criteria, and extracts the target URL dynamically.
+4. **Comprehensive Exploratory Testing & CSV Generation**:
+   - Explores the target URL and generates non-redundant test cases covering:
+     1. Core Happy Path / Primary Acceptance
+     2. Negative & Error Handling
+     3. Boundary & Edge Scenarios
+     4. State Persistence & Cross-View Consistency
+   - Writes detailed test cases to `tests/test-cases/{issueKey}-test-cases.csv` (with Priority, Type, Steps, Expected Result, Test Data, and Feasibility).
 5. **AIO Tests MCP Sync [Mandatory Blocker]**:
    - Creates rich test cases in AIO Tests via MCP (`status: "Published"`, `priority`, `type`, `requirements: [numericJiraIssueId]`, `automationStatus: "Automated"`).
    - Verifies requirement linkage via `get_test_case`.
-   - Updates `tests/test-cases/{issueKey}-test-cases.csv` with the generated AIO keys (e.g., `KAN-TC-20`).
-6. **Generate Playwright Architecture**:
-   - Builds POM classes (`tests/pages/`), custom fixtures (`tests/fixtures/`), test data (`tests/utils/`), and test specs (`tests/e2e/{issueKey}.spec.ts`) tagged with AIO keys (`@KAN-TC-20`).
-   - Adds full-page screenshot capture as execution proof.
+   - Updates `tests/test-cases/{issueKey}-test-cases.csv` with the generated AIO keys (e.g., `KAN-TC-36`).
+6. **Generate Standardized Playwright Architecture**:
+   - Builds POM classes (`tests/pages/`) extending `BasePage`.
+   - Registers custom fixtures (`tests/fixtures/page.fixture.ts`).
+   - Builds test spec (`tests/e2e/{issueKey}.spec.ts`) tagged with AIO keys, using `test.step(...)`, strict POM encapsulation, and one-liner `captureProof(...)`.
 7. **Execution & Reporting [Zero-Failure Blocker & Cycle Reuse]**:
    - Runs `JIRA_ISSUE_KEY={issueKey} npx playwright test tests/e2e/{issueKey}.spec.ts`.
    - Automatically creates an execution cycle on the first run, and reuses that same cycle (`AIO_CYCLE_KEY`) across retries to prevent duplicate data in Jira.
@@ -127,4 +168,4 @@ JIRA_ISSUE_KEY=KAN-10
     - Automatically pulls latest `main` via rebase to ensure zero conflicts.
     - Commits (`feat({issueKey}): {jiraSummary}`) and pushes directly to `agent/feat/{issueKey}-{kebab-summary}`.
     - Opens Pull Request via `gh pr create` strictly scoped to `pw-integrate-jira`.
-11. **Automated Slack Alert**: Dispatches a structured Block Kit card to `SLACK_WEBHOOK_URL` containing Jira link, test results, AIO cycle key, and verified PR URL. Once the PR is merged, the worktree is cleaned up via `git worktree remove .worktrees/{issueKey}`.
+11. **Automated Slack Alert**: Dispatches a structured Block Kit card with `<!here>` to `SLACK_WEBHOOK_URL` containing Jira link, test results, AIO cycle key, executed test breakdown, and verified PR URL. Once the PR is merged, the worktree is cleaned up via `git worktree remove .worktrees/{issueKey}`.
