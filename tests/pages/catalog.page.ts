@@ -73,6 +73,11 @@ export class CatalogPage extends BasePage {
     await expect(this.cartHeaderLink).toContainText(/my cart \(0\)/i);
   }
 
+  async verifyCartCounter(count: number | string): Promise<void> {
+    await expect(this.cartHeaderLink).toBeVisible();
+    await expect(this.cartHeaderLink).toContainText(new RegExp(`my cart \\(${count}\\)`, 'i'));
+  }
+
   async addToCart(): Promise<void> {
     await expect(this.addToCartButton).toBeVisible();
     await this.addToCartButton.click();

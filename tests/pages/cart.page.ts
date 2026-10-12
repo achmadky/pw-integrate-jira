@@ -5,11 +5,17 @@ export class CartPage extends BasePage {
   readonly cartUrl: string = 'https://sauce-demo.myshopify.com/cart';
   readonly removeItemButton: Locator;
   readonly checkoutButton: Locator;
+  readonly quantityInput: Locator;
+  readonly updateButton: Locator;
+  readonly cartHeaderLink: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.removeItemButton = page.locator('a[href*="quantity=0"]').filter({ hasText: /x|remove/i }).locator('visible=true').first();
-    this.checkoutButton = page.locator('input[name="checkout"], button[name="checkout"], input[value*="Check Out" i]').locator('visible=true').first();
+    this.removeItemButton = page.locator('a:visible').filter({ hasText: /^x$/i }).or(page.locator('a[href*="/cart/change"]:visible')).first();
+    this.checkoutButton = page.locator('input#checkout, input[name="checkout"], input[value*="Check Out" i]:visible').first();
+    this.quantityInput = page.locator('input[name*="updates"]:visible').first();
+    this.updateButton = page.locator('input#update, input[value="Update"]:visible').first();
+    this.cartHeaderLink = page.getByRole('link', { name: /my cart/i }).first();
   }
 
   async openCart(): Promise<void> {
@@ -19,6 +25,30 @@ export class CartPage extends BasePage {
 
   async verifyProductInCart(productName: string): Promise<void> {
     await expect(this.page.locator('body')).toContainText(new RegExp(productName, 'i'));
+  }
+
+  async verifyLineItemDetails(title: string, price: string, qty: string, lineTotal: string): Promise<void> {
+    await expect(this.page.locator('body')).toContainText(new RegExp(title, 'i'));
+    await expect(this.page.locator('body')).toContainText(price);
+    await expect(this.quantityInput).toHaveValue(qty);
+    await expect(this.page.locator('body')).toContainText(lineTotal);
+  }
+
+  async updateQuantity(newQty: string): Promise<void> {
+    await expect(this.quantityInput).toBeVisible();
+    await this.quantityInput.fill(newQty);
+    await expect(this.updateButton).toBeVisible();
+    await this.updateButton.click();
+    await this.waitForPageLoad();
+  }
+
+  async verifySubtotal(expectedTotal: string): Promise<void> {
+    await expect(this.page.locator('body')).toContainText(expectedTotal);
+  }
+
+  async verifyCartCounter(count: number | string): Promise<void> {
+    await expect(this.cartHeaderLink).toBeVisible();
+    await expect(this.cartHeaderLink).toContainText(new RegExp(`my cart \\(${count}\\)`, 'i'));
   }
 
   async removeProduct(): Promise<void> {
